@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/davecgh/go-spew/spew"
 )
@@ -20,7 +21,9 @@ func J(elem ...string) string {
 }
 
 func Folder(path string) string {
+	path = strings.TrimRight(path, "/")
 	folder, _ := filepath.Split(path)
+	folder = strings.TrimRight(folder, "/")
 
 	return folder
 }

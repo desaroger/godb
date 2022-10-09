@@ -54,8 +54,6 @@ func (fs *FileStorage) Patch(document c.Document) error {
 	}
 
 	existing_document.Patch(document)
-	delete(existing_document, "id")
-	// existing_document["id"] = document_id
 
 	return fs.fileSet(path, existing_document)
 }
@@ -107,13 +105,18 @@ func (fs *FileStorage) Delete(id string) error {
 		return err
 	}
 
-	return nil
+	return fs.removeEmptyFolders(id)
 }
 
 func (fs *FileStorage) DeleteFolder(folder string) error {
 	path := fs.resolvePath(folder)
 
-	return os.RemoveAll(path)
+	err := os.RemoveAll(path)
+	if err != nil {
+		return err
+	}
+
+	return fs.removeEmptyFolders(folder)
 }
 
 func (fs *FileStorage) fileGet(path string) (c.Document, error) {
@@ -210,4 +213,32 @@ func (fs *FileStorage) ensureFolder(path string) error {
 	folder := c.Folder(path)
 
 	return os.MkdirAll(folder, os.ModePerm)
+}
+
+func (fs *FileStorage) removeEmptyFolders(id string) error {
+	c.D("removeEmptyFolders", id)
+	if id == "" {
+		return nil
+	}
+
+	path := fs.resolvePath(id)
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			parentFolder := c.Folder(id)
+			return fs.removeEmptyFolders(parentFolder)
+		}
+		return err
+	}
+	if len(files) != 0 {
+		return nil
+	}
+
+	err = os.Remove(path)
+	if err != nil {
+		return err
+	}
+
+	parentFolder := c.Folder(id)
+	return fs.removeEmptyFolders(parentFolder)
 }
