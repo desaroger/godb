@@ -8,12 +8,15 @@ import (
 	c "godb/common"
 )
 
-func testEachStorage(t *testing.T, f func(*testing.T, Storage)) {
-	storages := map[string]Storage{
-		"FileStorage": &FileStorage{Root: t.TempDir()},
+func getStorages(tempDir string) map[string]Storage {
+	return map[string]Storage{
+		"FileStorage":   &FileStorage{Root: tempDir},
+		"MemoryStorage": &MemoryStorage{},
 	}
+}
 
-	for storageName, storage := range storages {
+func testEachStorage(t *testing.T, f func(*testing.T, Storage)) {
+	for storageName, storage := range getStorages(t.TempDir()) {
 		t.Run(storageName, func(tt *testing.T) {
 			f(tt, storage)
 		})
@@ -57,7 +60,7 @@ func Test_CanGetDocuments(t *testing.T) {
 			t.Fatalf("unexpected error '%s'", err)
 		}
 		expected := c.NewDocument("movies/matrix", "name", "Matrix")
-		if !reflect.DeepEqual(document, expected) {
+		if !objectsDeepEqual(document, expected) {
 			t.Fatalf("expected 'movies/matrix' document to equal %v but got %v", expected, document)
 		}
 
@@ -83,7 +86,7 @@ func Test_CanListDocuments(t *testing.T) {
 			t.Fatalf("expected list ids to be an array but got nil")
 		}
 		expected := []string{"movies/"}
-		if !reflect.DeepEqual(ids, expected) {
+		if !objectsDeepEqual(ids, expected) {
 			t.Fatalf("expected list ids to equal %v but got %v", expected, ids)
 		}
 
@@ -92,7 +95,7 @@ func Test_CanListDocuments(t *testing.T) {
 			t.Fatalf("unexpected error '%s'", err)
 		}
 		expected = []string{"matrix"}
-		if !reflect.DeepEqual(ids, expected) {
+		if !objectsDeepEqual(ids, expected) {
 			t.Fatalf("expected list ids to equal %v but got %v", expected, ids)
 		}
 	})
@@ -111,7 +114,7 @@ func Test_CanPatchDocuments(t *testing.T) {
 			t.Fatalf("unexpected error '%s'", err)
 		}
 		expected := c.NewDocument("movies/matrix", "name", "Matrix", "desc", "wrong")
-		if !reflect.DeepEqual(document, expected) {
+		if !objectsDeepEqual(document, expected) {
 			t.Fatalf("expected 'movies/matrix' document to equal %v but got %v", expected, document)
 		}
 
@@ -126,8 +129,8 @@ func Test_CanPatchDocuments(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error '%s'", err)
 		}
-		expected = c.NewDocument("movies/matrix", "name", "Matrix", "desc", "It's about a guy...", "year", float64(1999))
-		if !reflect.DeepEqual(document, expected) {
+		expected = c.NewDocument("movies/matrix", "name", "Matrix", "desc", "It's about a guy...", "year", 1999)
+		if !objectsDeepEqual(document, expected) {
 			t.Fatalf("expected 'movies/matrix' document to equal %v but got %v", expected, document)
 		}
 	})
@@ -150,7 +153,7 @@ func Test_CanDeleteDocuments(t *testing.T) {
 			t.Fatalf("unexpected error '%s'", err)
 		}
 		expected := []string{"matrix", "pride_and_prejudice"}
-		if !reflect.DeepEqual(ids, expected) {
+		if !objectsDeepEqual(ids, expected) {
 			t.Fatalf("expected list ids to equal %v but got %v", expected, ids)
 		}
 
@@ -166,7 +169,7 @@ func Test_CanDeleteDocuments(t *testing.T) {
 			t.Fatalf("unexpected error '%s'", err)
 		}
 		expected = []string{"pride_and_prejudice"}
-		if !reflect.DeepEqual(ids, expected) {
+		if !objectsDeepEqual(ids, expected) {
 			t.Fatalf("expected list ids to equal %v but got %v", expected, ids)
 		}
 	})
@@ -185,7 +188,7 @@ func Test_DeleteRemovesEmptyFolders(t *testing.T) {
 			t.Fatalf("unexpected error '%s'", err)
 		}
 		expected := []string{"movies/"}
-		if !reflect.DeepEqual(ids, expected) {
+		if !objectsDeepEqual(ids, expected) {
 			t.Fatalf("expected list ids to equal %v but got %v", expected, ids)
 		}
 
@@ -195,7 +198,7 @@ func Test_DeleteRemovesEmptyFolders(t *testing.T) {
 			t.Fatalf("unexpected error '%s'", err)
 		}
 		expected = []string{"matrix"}
-		if !reflect.DeepEqual(ids, expected) {
+		if !objectsDeepEqual(ids, expected) {
 			t.Fatalf("expected list ids to equal %v but got %v", expected, ids)
 		}
 
@@ -211,7 +214,7 @@ func Test_DeleteRemovesEmptyFolders(t *testing.T) {
 			t.Fatalf("unexpected error '%s'", err)
 		}
 		expected = []string{}
-		if !reflect.DeepEqual(ids, expected) {
+		if !objectsDeepEqual(ids, expected) {
 			t.Fatalf("expected list ids to equal %v but got %v", expected, ids)
 		}
 
@@ -221,8 +224,28 @@ func Test_DeleteRemovesEmptyFolders(t *testing.T) {
 			t.Fatalf("unexpected error '%s'", err)
 		}
 		expected = []string{}
-		if !reflect.DeepEqual(ids, expected) {
+		if !objectsDeepEqual(ids, expected) {
 			t.Fatalf("expected list ids to equal %v but got %v", expected, ids)
 		}
 	})
+}
+
+func BenchmarkStorages(b *testing.B) {
+	for storageName, storage := range getStorages(b.TempDir()) {
+		b.Run(storageName, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				storage.Set(c.NewDocument("movies/matrix", "name", "Matrix"))
+				storage.List("movies")
+				storage.Get("movies/matrix")
+				storage.Delete("movies/matrix")
+			}
+		})
+	}
+}
+
+func objectsDeepEqual(x any, y any) bool {
+	xx := c.DeepClone(x)
+	yy := c.DeepClone(y)
+
+	return reflect.DeepEqual(xx, yy)
 }

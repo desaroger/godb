@@ -216,7 +216,6 @@ func (fs *FileStorage) ensureFolder(path string) error {
 }
 
 func (fs *FileStorage) removeEmptyFolders(id string) error {
-	c.D("removeEmptyFolders", id)
 	if id == "" {
 		return nil
 	}

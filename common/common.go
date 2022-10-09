@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -26,4 +27,17 @@ func Folder(path string) string {
 	folder = strings.TrimRight(folder, "/")
 
 	return folder
+}
+
+func DeepClone[T any](x T) T {
+	bytes, err := json.Marshal(x)
+	if err != nil {
+		panic("XXX")
+	}
+
+	clone := new(T)
+	// clone := reflect.New(reflect.TypeOf(x))
+	json.Unmarshal(bytes, clone)
+
+	return *clone
 }
