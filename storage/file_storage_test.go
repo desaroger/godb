@@ -103,8 +103,8 @@ func Test_canCRUDDocuments(t *testing.T) {
 	if ids3 == nil {
 		t.Fatalf("expected empty list, but got nil")
 	}
-	if len(ids3) != 0 {
-		t.Fatalf("expected empty list, but got '%s'", ids3)
+	if !reflect.DeepEqual(ids3, []string{"romance/"}) {
+		t.Fatalf("expected ids to be ['romance/'], but got '%s'", ids3)
 	}
 
 	// Delete file

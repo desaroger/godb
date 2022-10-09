@@ -17,8 +17,8 @@ type httpJsonApi struct {
 	godb *godb.Godb
 }
 
-func NewHttpJsonApi() *httpJsonApi {
-	storage := &s.FileStorage{Root: "_data"}
+func NewHttpJsonApi(rootFolder string) *httpJsonApi {
+	storage := &s.FileStorage{Root: rootFolder}
 	return &httpJsonApi{
 		godb: godb.NewGodb(storage),
 	}
@@ -30,22 +30,21 @@ func (api *httpJsonApi) Start(addr string) {
 }
 
 func (api *httpJsonApi) main(w http.ResponseWriter, r *http.Request) {
-	document := queryToDocument(r.URL.Query())
-	id := strings.Trim(r.URL.Path, "/")
-	document["id"] = id
+	path := strings.Trim(r.URL.Path, "/")
 
-	var response any = errors.New("page not found")
-	if strings.HasSuffix(id, "/_set") {
-		document["id"] = strings.TrimSuffix(id, "/_set")
+	var response any
+	if path == "_set" {
+		document := queryToDocument(r.URL.Query())
 		response = api.set(document)
-	} else if strings.HasSuffix(id, "/_patch") {
-		document["id"] = strings.TrimSuffix(id, "/_patch")
+	} else if path == "_patch" {
+		document := queryToDocument(r.URL.Query())
 		response = api.set(document)
-	} else if strings.HasSuffix(id, "/_list") {
-		id = strings.TrimSuffix(id, "/_list")
+	} else if strings.HasSuffix(path, "_list") {
+		id := strings.TrimSuffix(path, "_list")
+		id = strings.Trim(path, "/")
 		response = api.list(id)
-	} else if id != "" {
-		response = api.get(id)
+	} else if path != "" {
+		response = api.get(path)
 	} else {
 		response = api.home()
 	}

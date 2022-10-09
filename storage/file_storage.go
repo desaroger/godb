@@ -79,10 +79,12 @@ func (fs *FileStorage) List(folder string) ([]string, error) {
 
 	simple_ids := []string{}
 	for _, f := range files {
-		if !strings.HasSuffix(f.Name(), ".json") {
-			continue
+		simple_id := f.Name()
+		if strings.HasSuffix(f.Name(), ".json") {
+			simple_id = strings.TrimSuffix(simple_id, ".json")
+		} else {
+			simple_id += "/"
 		}
-		simple_id := strings.TrimSuffix(f.Name(), ".json")
 		simple_ids = append(simple_ids, simple_id)
 	}
 

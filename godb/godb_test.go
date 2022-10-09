@@ -1,7 +1,6 @@
 package godb
 
 import (
-	"os"
 	"reflect"
 	"testing"
 
@@ -10,9 +9,7 @@ import (
 )
 
 func Test_CreateIndex(t *testing.T) {
-	os.RemoveAll("./_data")
-	storage := &s.FileStorage{Root: "./_data"}
-	storage.DeleteFolder("")
+	storage := &s.FileStorage{Root: t.TempDir()}
 	godb := NewGodb(storage)
 
 	index_document := c.NewDocument("movies/_indexes/by_name", "func", "(doc) => ([doc.name, {a: 23, b: doc.id}])")

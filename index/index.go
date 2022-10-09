@@ -1,6 +1,8 @@
 package index
 
 import (
+	"strings"
+
 	c "godb/common"
 	s "godb/storage"
 )
@@ -64,6 +66,9 @@ func OnDocumentModified(storage s.Storage, document c.Document) error {
 	}
 
 	for _, document_simple_id := range document_simple_ids {
+		if strings.HasSuffix(document_simple_id, "/") {
+			continue
+		}
 		document_id := c.J(document_folder, document_simple_id)
 		document, err := storage.Get(document_id)
 		if err != nil {
