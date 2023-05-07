@@ -36,17 +36,17 @@ func (fs *FileStorage) Set(document c.Document) error {
 	return fs.fileSet(path, document)
 }
 
-func (fs *FileStorage) Patch(document c.Document) error {
+func (fs *FileStorage) Patch(document c.Document) (c.Document, error) {
 	document_id, err := document.GetId()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	path := fs.resolvePath(document_id + ".json")
 
 	existing_document, err := fs.fileGet(path)
 	if err != nil {
 		if !errors.Is(err, c.ErrDocumentDoestNotExist) {
-			return err
+			return nil, err
 		}
 	}
 	if existing_document == nil {
@@ -55,7 +55,12 @@ func (fs *FileStorage) Patch(document c.Document) error {
 
 	existing_document.Patch(document)
 
-	return fs.fileSet(path, existing_document)
+	err = fs.fileSet(path, existing_document)
+	if err != nil {
+		return nil, err
+	}
+
+	return existing_document, nil
 }
 
 func (fs *FileStorage) Exists(id string) (bool, error) {

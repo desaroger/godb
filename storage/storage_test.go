@@ -119,7 +119,7 @@ func Test_CanPatchDocuments(t *testing.T) {
 		}
 
 		// Patch the description and add a year
-		err = storage.Patch(c.NewDocument("movies/matrix", "desc", "It's about a guy...", "year", 1999))
+		_, err = storage.Patch(c.NewDocument("movies/matrix", "desc", "It's about a guy...", "year", 1999))
 		if err != nil {
 			t.Fatalf("unexpected error '%s'", err)
 		}

@@ -30,13 +30,18 @@ func (godb *Godb) Get(id string) (c.Document, error) {
 	return godb.storage.Get(id)
 }
 
-func (godb *Godb) Patch(document c.Document) error {
-	err := godb.storage.Patch(document)
+func (godb *Godb) Patch(document c.Document) (c.Document, error) {
+	document, err := godb.storage.Patch(document)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return index.OnDocumentModified(godb.storage, document)
+	err = index.OnDocumentModified(godb.storage, document)
+	if err != nil {
+		return nil, err
+	}
+
+	return document, nil
 }
 
 func (godb *Godb) List(id string) ([]string, error) {

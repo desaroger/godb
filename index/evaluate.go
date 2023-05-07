@@ -10,23 +10,31 @@ import (
 
 func evaluate(document c.Document, index_func string) (string, c.Document, error) {
 	document_bytes, err := json.Marshal(document)
+	if err != nil {
+		return "", nil, err
+	}
 	document_json := string(document_bytes)
 
 	iso := v8.NewIsolate()
 	ctx := v8.NewContext(iso)
-	ctx.RunScript(c.S("const indexFunc = %s", index_func), "main.js")
-	ctx.RunScript(c.S("const indexResult = indexFunc(%s)", document_json), "main.js")
+	_, err = ctx.RunScript(c.S("const indexFunc = %s", index_func), "main.js")
+	if err != nil {
+		return "", nil, err
+	}
+	_, err = ctx.RunScript(c.S("const indexResult = indexFunc(%s)", document_json), "main.js")
+	if err != nil {
+		return "", nil, err
+	}
 	indexId, err := ctx.RunScript("indexResult && indexResult[0] || null", "main.js")
 	if err != nil {
 		return "", nil, err
 	}
+	if indexId.IsNull() {
+		return "", nil, nil
+	}
 	indexContent, err := ctx.RunScript("JSON.stringify(indexResult && indexResult[1] || null)", "main.js")
 	if err != nil {
 		return "", nil, err
-	}
-
-	if indexId.IsNull() {
-		return "", nil, nil
 	}
 
 	var result_document c.Document

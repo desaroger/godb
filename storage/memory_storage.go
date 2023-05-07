@@ -33,27 +33,33 @@ func (ms *MemoryStorage) Set(document c.Document) error {
 	return nil
 }
 
-func (ms *MemoryStorage) Patch(document c.Document) error {
+func (ms *MemoryStorage) Patch(document c.Document) (c.Document, error) {
 	ms.ensureData()
 	document_id, err := document.GetId()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	existing_document, err := ms.Get(document_id)
 	if err != nil {
 		if !errors.Is(err, c.ErrDocumentDoestNotExist) {
-			return err
+			return nil, err
 		}
 	}
 	if existing_document == nil {
 		existing_document = c.NewDocument(document_id)
+	} else {
+		existing_document = c.DeepClone(existing_document)
 	}
 
-	existing_document = c.DeepClone(existing_document)
 	existing_document.Patch(document)
 
-	return ms.Set(existing_document)
+	err = ms.Set(existing_document)
+	if err != nil {
+		return nil, err
+	}
+
+	return existing_document, nil
 }
 
 func (ms *MemoryStorage) Exists(id string) (bool, error) {

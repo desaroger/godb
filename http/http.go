@@ -38,10 +38,10 @@ func (api *httpJsonApi) main(w http.ResponseWriter, r *http.Request) {
 		response = api.set(document)
 	} else if path == "_patch" {
 		document := queryToDocument(r.URL.Query())
-		response = api.set(document)
+		response = api.patch(document)
 	} else if strings.HasSuffix(path, "_list") {
 		id := strings.TrimSuffix(path, "_list")
-		id = strings.Trim(path, "/")
+		id = strings.Trim(id, "/")
 		response = api.list(id)
 	} else if path != "" {
 		response = api.get(path)
@@ -94,12 +94,12 @@ func (api *httpJsonApi) set(document c.Document) any {
 }
 
 func (api *httpJsonApi) patch(document c.Document) any {
-	err := api.godb.Patch(document)
+	document, err := api.godb.Patch(document)
 	if err != nil {
 		return err
 	}
 
-	return true
+	return document
 }
 
 func (api *httpJsonApi) list(id string) any {
