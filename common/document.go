@@ -34,6 +34,15 @@ func (document Document) GetId() (string, error) {
 	return document["id"].(string), nil
 }
 
+func (document Document) GetIdOrNil() string {
+	id, err := document.GetId()
+	if err != nil {
+		return "<?>"
+	}
+
+	return id
+}
+
 func (document Document) Patch(other Document) {
 	for key, value := range other {
 		document[key] = value
