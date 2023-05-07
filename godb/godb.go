@@ -47,3 +47,7 @@ func (godb *Godb) Patch(document c.Document) (c.Document, error) {
 func (godb *Godb) List(id string) ([]string, error) {
 	return godb.storage.List(id)
 }
+
+func (godb *Godb) Delete(id string) error {
+	return godb.storage.Delete(id)
+}

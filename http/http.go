@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -25,29 +26,15 @@ func NewHttpJsonApi(rootFolder string) *httpJsonApi {
 }
 
 func (api *httpJsonApi) Start(addr string) {
-	http.HandleFunc("/", api.main)
+	http.HandleFunc("/", api.handle)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
 
-func (api *httpJsonApi) main(w http.ResponseWriter, r *http.Request) {
+func (api *httpJsonApi) handle(w http.ResponseWriter, r *http.Request) {
 	path := strings.Trim(r.URL.Path, "/")
+	query := r.URL.Query()
 
-	var response any
-	if path == "_set" {
-		document := queryToDocument(r.URL.Query())
-		response = api.set(document)
-	} else if path == "_patch" {
-		document := queryToDocument(r.URL.Query())
-		response = api.patch(document)
-	} else if strings.HasSuffix(path, "_list") {
-		id := strings.TrimSuffix(path, "_list")
-		id = strings.Trim(id, "/")
-		response = api.list(id)
-	} else if path != "" {
-		response = api.get(path)
-	} else {
-		response = api.home()
-	}
+	response := api.handleInner(path, query)
 
 	if err, ok := response.(error); ok {
 		response = c.Document{
@@ -58,13 +45,40 @@ func (api *httpJsonApi) main(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func (api *httpJsonApi) home() any {
-	ids, err := api.godb.List("")
-	if err != nil {
-		return err
+func (api *httpJsonApi) handleInner(path string, query url.Values) any {
+	for key := range query {
+		if key == "id" {
+			return errors.New("id needs to be set in the url")
+		}
 	}
 
-	return ids
+	itemsList := strings.Split(path, "/")
+	lastItem := itemsList[len(itemsList)-1]
+
+	switch lastItem {
+	case "_set":
+		id := c.J(itemsList[:len(itemsList)-1]...)
+		document := queryToDocument(id, query)
+		return api.set(document)
+	case "_patch":
+		id := c.J(itemsList[:len(itemsList)-1]...)
+		fmt.Println("id " + id)
+
+		document := queryToDocument(id, query)
+		return api.patch(document)
+	case "_delete":
+		id := c.J(itemsList[:len(itemsList)-1]...)
+		return api.delete(id)
+	case "_list":
+		id := c.J(itemsList[:len(itemsList)-1]...)
+		return api.list(id)
+	}
+
+	if path == "" {
+		return api.list("")
+	} else {
+		return api.get(path)
+	}
 }
 
 func (api *httpJsonApi) get(id string) any {
@@ -90,7 +104,7 @@ func (api *httpJsonApi) set(document c.Document) any {
 		return err
 	}
 
-	return true
+	return "created"
 }
 
 func (api *httpJsonApi) patch(document c.Document) any {
@@ -111,19 +125,17 @@ func (api *httpJsonApi) list(id string) any {
 	return ids
 }
 
-func apiSuccess(w http.ResponseWriter, v any) {
-	json.NewEncoder(w).Encode(v)
-}
-
-func apiError(w http.ResponseWriter, err error) {
-	response := map[string]string{
-		"error": err.Error(),
+func (api *httpJsonApi) delete(id string) any {
+	err := api.godb.Delete(id)
+	if err != nil {
+		return err
 	}
-	json.NewEncoder(w).Encode(response)
+
+	return "deleted"
 }
 
-func queryToDocument(query url.Values) c.Document {
-	document := c.NewDocument("")
+func queryToDocument(id string, query url.Values) c.Document {
+	document := c.NewDocument(id)
 
 	for key, element := range query {
 		document[key] = element[0]
