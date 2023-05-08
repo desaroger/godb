@@ -22,13 +22,13 @@ func (fs *FileStorage) Get(id string) (c.Document, error) {
 	return fs.fileGet(path)
 }
 
-func (fs *FileStorage) Set(document c.Document) error {
+func (fs *FileStorage) Set(document c.Document) (c.Document, error) {
 	document_id, err := document.GetId()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if document_id == "" {
-		return c.ErrInvalidId
+		return nil, c.ErrInvalidId
 	}
 
 	path := fs.resolvePath(document_id + ".json")
@@ -55,12 +55,7 @@ func (fs *FileStorage) Patch(document c.Document) (c.Document, error) {
 
 	existing_document.Patch(document)
 
-	err = fs.fileSet(path, existing_document)
-	if err != nil {
-		return nil, err
-	}
-
-	return existing_document, nil
+	return fs.fileSet(path, existing_document)
 }
 
 func (fs *FileStorage) Exists(id string) (bool, error) {
@@ -172,27 +167,32 @@ func (fs *FileStorage) fileCreate(path string, document c.Document) error {
 	return err
 }
 
-func (fs *FileStorage) fileSet(path string, document c.Document) error {
+func (fs *FileStorage) fileSet(path string, document c.Document) (c.Document, error) {
 	backup_path := path + ".backup"
 
 	err := fs.ensureFolder(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = fs.fileCreate(backup_path, document)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = os.Remove(path)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
-			return err
+			return nil, err
 		}
 	}
 
-	return os.Rename(backup_path, path)
+	err = os.Rename(backup_path, path)
+	if err != nil {
+		return nil, err
+	}
+
+	return document, nil
 }
 
 func (fs *FileStorage) fileExists(path string) (bool, error) {

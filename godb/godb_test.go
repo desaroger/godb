@@ -13,7 +13,7 @@ func Test_CreateIndex(t *testing.T) {
 	godb := NewGodb(storage)
 
 	index_document := c.NewDocument("movies/_indexes/by_name", "func", "(doc) => ([doc.name, {a: 23, b: doc.id}])")
-	err := godb.Set(index_document)
+	_, err := godb.Set(index_document)
 	if err != nil {
 		t.Fatalf("unexpected error '%s'", err)
 	}
@@ -23,11 +23,11 @@ func Test_CreateIndex(t *testing.T) {
 		t.Fatalf("unexpected error '%s'", err)
 	}
 
-	err = godb.Set(c.NewDocument("movies/matrix", "name", "Matrix"))
+	_, err = godb.Set(c.NewDocument("movies/matrix", "name", "Matrix"))
 	if err != nil {
 		t.Fatalf("unexpected error '%s'", err)
 	}
-	err = godb.Set(c.NewDocument("movies/superman", "name", "Superman"))
+	_, err = godb.Set(c.NewDocument("movies/superman", "name", "Superman"))
 	if err != nil {
 		t.Fatalf("unexpected error '%s'", err)
 	}

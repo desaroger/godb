@@ -89,7 +89,7 @@ func OnDocumentModified(storage s.Storage, document c.Document) error {
 			evaluation_document_id := c.J(index.Id, evaluation_id)
 			evaluation_content["id"] = evaluation_document_id
 
-			err = storage.Set(evaluation_content)
+			_, err = storage.Set(evaluation_content)
 			if err != nil {
 				return err
 			}

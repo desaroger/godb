@@ -22,15 +22,15 @@ func (ms *MemoryStorage) Get(id string) (c.Document, error) {
 	return document, nil
 }
 
-func (ms *MemoryStorage) Set(document c.Document) error {
+func (ms *MemoryStorage) Set(document c.Document) (c.Document, error) {
 	ms.ensureData()
 	document_id, err := document.GetId()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	ms.data[document_id] = document
 
-	return nil
+	return document, nil
 }
 
 func (ms *MemoryStorage) Patch(document c.Document) (c.Document, error) {
@@ -54,12 +54,7 @@ func (ms *MemoryStorage) Patch(document c.Document) (c.Document, error) {
 
 	existing_document.Patch(document)
 
-	err = ms.Set(existing_document)
-	if err != nil {
-		return nil, err
-	}
-
-	return existing_document, nil
+	return ms.Set(existing_document)
 }
 
 func (ms *MemoryStorage) Exists(id string) (bool, error) {

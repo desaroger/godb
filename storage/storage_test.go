@@ -25,7 +25,7 @@ func testEachStorage(t *testing.T, f func(*testing.T, Storage)) {
 
 func Test_CanCreateDocuments(t *testing.T) {
 	testEachStorage(t, func(t *testing.T, storage Storage) {
-		err := storage.Set(c.NewDocument("movies/matrix", "name", "Matrix"))
+		_, err := storage.Set(c.NewDocument("movies/matrix", "name", "Matrix"))
 		if err != nil {
 			t.Fatalf("unexpected error '%s'", err)
 		}
@@ -50,7 +50,7 @@ func Test_CanCreateDocuments(t *testing.T) {
 
 func Test_CanGetDocuments(t *testing.T) {
 	testEachStorage(t, func(t *testing.T, storage Storage) {
-		err := storage.Set(c.NewDocument("movies/matrix", "name", "Matrix"))
+		_, err := storage.Set(c.NewDocument("movies/matrix", "name", "Matrix"))
 		if err != nil {
 			t.Fatalf("unexpected error '%s'", err)
 		}
@@ -73,7 +73,7 @@ func Test_CanGetDocuments(t *testing.T) {
 
 func Test_CanListDocuments(t *testing.T) {
 	testEachStorage(t, func(t *testing.T, storage Storage) {
-		err := storage.Set(c.NewDocument("movies/matrix", "name", "Matrix"))
+		_, err := storage.Set(c.NewDocument("movies/matrix", "name", "Matrix"))
 		if err != nil {
 			t.Fatalf("unexpected error '%s'", err)
 		}
@@ -103,7 +103,7 @@ func Test_CanListDocuments(t *testing.T) {
 
 func Test_CanPatchDocuments(t *testing.T) {
 	testEachStorage(t, func(t *testing.T, storage Storage) {
-		err := storage.Set(c.NewDocument("movies/matrix", "name", "Matrix", "desc", "wrong"))
+		_, err := storage.Set(c.NewDocument("movies/matrix", "name", "Matrix", "desc", "wrong"))
 		if err != nil {
 			t.Fatalf("unexpected error '%s'", err)
 		}
@@ -138,11 +138,11 @@ func Test_CanPatchDocuments(t *testing.T) {
 
 func Test_CanDeleteDocuments(t *testing.T) {
 	testEachStorage(t, func(t *testing.T, storage Storage) {
-		err := storage.Set(c.NewDocument("movies/matrix", "name", "Matrix"))
+		_, err := storage.Set(c.NewDocument("movies/matrix", "name", "Matrix"))
 		if err != nil {
 			t.Fatalf("unexpected error '%s'", err)
 		}
-		err = storage.Set(c.NewDocument("movies/pride_and_prejudice", "name", "Pride and prejudice"))
+		_, err = storage.Set(c.NewDocument("movies/pride_and_prejudice", "name", "Pride and prejudice"))
 		if err != nil {
 			t.Fatalf("unexpected error '%s'", err)
 		}
@@ -177,7 +177,7 @@ func Test_CanDeleteDocuments(t *testing.T) {
 
 func Test_DeleteRemovesEmptyFolders(t *testing.T) {
 	testEachStorage(t, func(t *testing.T, storage Storage) {
-		err := storage.Set(c.NewDocument("movies/matrix", "name", "Matrix"))
+		_, err := storage.Set(c.NewDocument("movies/matrix", "name", "Matrix"))
 		if err != nil {
 			t.Fatalf("unexpected error '%s'", err)
 		}

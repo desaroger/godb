@@ -74,37 +74,47 @@ func (api *httpJsonApi) handleInner(path string, query url.Values) any {
 		return api.list(id)
 	}
 
-	if path == "" {
-		return api.list("")
-	} else {
-		return api.get(path)
-	}
+	return api.get(path)
 }
 
 func (api *httpJsonApi) get(id string) any {
+	if id == "" {
+		id = "/"
+	}
+
 	document, err := api.godb.Get(id)
 	if err != nil {
-		if errors.Is(err, c.ErrDocumentDoestNotExist) {
-			var ids []string
-			ids, err = api.godb.List(id)
-			if err != nil {
-				return err
-			}
-			return ids
+		if !errors.Is(err, c.ErrDocumentDoestNotExist) {
+			return err
 		}
+	}
+
+	ids, err := api.godb.List(id)
+	if err != nil {
 		return err
 	}
 
-	return document
+	return c.Document{
+		"document": document,
+		"childIds": ids,
+	}
 }
 
 func (api *httpJsonApi) set(document c.Document) any {
-	err := api.godb.Set(document)
+	document, err := api.godb.Set(document)
 	if err != nil {
 		return err
 	}
 
-	return "created"
+	ids, err := api.godb.List(document.GetIdOrNil())
+	if err != nil {
+		return err
+	}
+
+	return c.Document{
+		"document": document,
+		"childIds": ids,
+	}
 }
 
 func (api *httpJsonApi) patch(document c.Document) any {
@@ -113,7 +123,15 @@ func (api *httpJsonApi) patch(document c.Document) any {
 		return err
 	}
 
-	return document
+	ids, err := api.godb.List(document.GetIdOrNil())
+	if err != nil {
+		return err
+	}
+
+	return c.Document{
+		"document": document,
+		"childIds": ids,
+	}
 }
 
 func (api *httpJsonApi) list(id string) any {
